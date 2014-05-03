@@ -23,7 +23,7 @@ public class Services
 	{
 		Database d=new Database();
 		conn=d.connectToDatabase();
-		///ArrayList<String> listOfDefaultImages;
+		//ArrayList<String> listOfDefaultImages;
 		  if (conn != null) 
 		  {
 			  try {
@@ -150,22 +150,15 @@ public class Services
 					  e.printStackTrace();
 				  }
 	            
-			  d.closeConnection();
-			  
-			
-			
+			  d.closeConnection();	
 		}
-		
-			
-			  return listOfBoards;
-			
-			
+			  return listOfBoards;	
 		}
 		
 		
 		
 		
-		public String creatBoard(String userId,Boards boards)
+		public String createBoard(String userId,Boards boards)
 		
 		{
 			Database d=new Database();
@@ -183,7 +176,7 @@ public class Services
 					  stmt=conn.createStatement();
 					  ResultSet rs;
 					  String sql="insert into boards values ('"+boardname+"','"+description+"','"+category+"')";
-					  ;
+					  
 	              stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
 	              rs=stmt.getGeneratedKeys();
 	              
@@ -224,25 +217,20 @@ public class Services
 		
 	
 		
-		public ArrayList<Tacks> showTacks(String userid,String boardName)
+		public ArrayList<Tacks> showTacks(String userId,String boardName)
 		{
 			
 			Database d=new Database();
 			conn=d.connectToDatabase();
-			ArrayList<Tacks> listOfAllTask=new ArrayList<Tacks>();
+			ArrayList<Tacks> listOfTacks=new ArrayList<Tacks>();
 			  if (conn != null) 
 			  {
 				  try {
 					  
-	              PreparedStatement prepstmt=conn.prepareStatement("select tl.idtacks,b.name,b.description from boardsFollowed bf,board b where bf.idboard=b.idboard and bf.iduser=?");
-	             
 	              
-	               
-	              
-	              
-	            /*  select idtacks from TackBoard where idboard IN 
-	              (select idboard from userboard where iduser LIKE userid AND idboard IN 
-	            		  (select idboard from board where name LIKE boardName) );*/
+	            
+	              String query="select url,description,name,idtack from tacks where idtacks IN (select idtacks from tacksboard where idboard IN (select idboard from userboards where iduser LIKE "+userId+"AND idboard IN (select idboard from pinterest.board where name LIKE "+boardName+")))";
+	              PreparedStatement prepstmt=conn.prepareStatement(query);
 	              
 	              prepstmt.setString(1,userId);
 	              ResultSet rs = prepstmt.executeQuery();
@@ -251,13 +239,12 @@ public class Services
 	              while(rs.next())
 	              {
 	            	  
-	            	  Boards boards= new Boards();
-	            	  boards.setBoardId(rs.getInt("idboard"));
-	            	  boards.setCategory(rs.getString("category"));
-	            	  boards.setDescription(rs.getString("description"));
-	            	  boards.setName(rs.getString("name"));
-		              
-	            	  listOfBoards.add(boards);
+	            	  Tacks tacks= new Tacks();
+	            	  tacks.setTackId(rs.getInt("idboard"));
+	            	  tacks.setDescription(rs.getString("description"));
+	            	  tacks.setName(rs.getString("name"));
+	            	  		              
+	            	  listOfTacks.add(tacks);
 	            	  
 	              }
 	            	
@@ -274,24 +261,90 @@ public class Services
 			
 		}
 		
-			
-			  return listOfBoards;
+			  return listOfTacks;
+			  
 			
 			
 		}
 		
 		
 		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+		public void deleteTack(String userId, String tackName) throws Exception
+		{
+			
+			Database d=new Database();
+			conn=d.connectToDatabase();
+			
+			ArrayList<Integer>tackIdList=new ArrayList<Integer>();
+			ArrayList<Integer>boardIdList=new ArrayList<Integer>();
+			ArrayList<Integer>boardNewId=new ArrayList<Integer>();
+			ArrayList<Integer>deleteTackId=new ArrayList<Integer>();
+			
+			 if (conn != null) 
+			  {
+						try
+						{
+						PreparedStatement prepstmt=conn.prepareStatement("select idtacks from tacks where name=?");
+						prepstmt.setString(1,tackName);
+						ResultSet rs=prepstmt.executeQuery();
+						while(rs.next())
+						{
+							tackIdList.add(rs.getInt("idtacks"));
+						}
+						for(int tl:tackIdList)
+						{
+						prepstmt=conn.prepareStatement("select idboard from tacksboard where idtacks=?");
+						prepstmt.setInt(1,tl);
+						rs=prepstmt.executeQuery();
+						boardIdList.add(rs.getInt("idboard"));
+						}
+						for(int bl:boardIdList)
+						{
+						
+						rs=stmt.executeQuery("select idboard from userboards where iduser LIKE "+ userId +" and idboard=" + bl + "" );
+						boardNewId.add(rs.getInt("idboard"));
+						}
+							
+						for(int bni:boardNewId)
+						{
+							prepstmt=conn.prepareStatement("select idtacks from tackboards where idboard=?");
+							prepstmt.setInt(1,bni);
+							rs=prepstmt.executeQuery();
+							deleteTackId.add(rs.getInt("idtacks"));
+						}
+						
+						
+						for(int td:deleteTackId)
+						{
+						prepstmt=conn.prepareStatement("delete from tacksboard where idtacks=?");
+						prepstmt.setInt(1,td);
+						rs=prepstmt.executeQuery();
+						}
+						
+						for(int td:deleteTackId)
+						{
+						//prepstmt=conn.prepareStatement("delete from tacks where idboard=?");
+						prepstmt=conn.prepareStatement("delete from tacks where idtacks=?");
+						prepstmt.setInt(1,td);
+						rs=prepstmt.executeQuery();
+						}  
+					}
+					catch(Exception e)
+				  {
+					  e.printStackTrace();
+				  }
+				  }
+		}
 	}
+
+
+
+
+
+
+
+ 
+
 
 
 	
