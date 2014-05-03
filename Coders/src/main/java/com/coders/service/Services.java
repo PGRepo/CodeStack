@@ -23,7 +23,7 @@ public class Services
 	{
 		Database d=new Database();
 		conn=d.connectToDatabase();
-		ArrayList<String> listOfDefaultImages;
+		///ArrayList<String> listOfDefaultImages;
 		  if (conn != null) 
 		  {
 			  try {
@@ -33,12 +33,12 @@ public class Services
               ResultSet rs = prepstmt.executeQuery();
               System.out.println("Query"+prepstmt);
               user = setUserBeanValues(rs,user);
-              listOfDefaultImages = displayDefaultImage();
+              //listOfDefaultImages = displayDefaultImage();
               if(user != null){
 					userMessage.setUser(user);
-					userMessage.setListOfDefaultImages(listOfDefaultImages);
+					//userMessage.setListOfDefaultImages(listOfDefaultImages);
 					userMessage.setMessage("Welcome "+user.getFirstName()+" "+user.getLastName());		
-					displayDefaultImage();
+					//displayDefaultImage();
 				}else{
 					userMessage.setMessage("Invalid Login Please try again!!!");
 				}
@@ -78,7 +78,7 @@ public class Services
 		
 		
 		
-		public ArrayList<String> displayDefaultImage()
+		/*public ArrayList<String> displayDefaultImage()
 		{
 			ArrayList<String> defaultImages = new ArrayList<String>();
 			
@@ -112,7 +112,7 @@ public class Services
 			return defaultImages;
 			
 		}
-		
+		*/
 		
 		
 		
@@ -171,7 +171,7 @@ public class Services
 			Database d=new Database();
 			conn=d.connectToDatabase();
 			
-			String message;
+			String message=null;
 			String boardname=boards.getName();
 			String description=boards.getDescription();
 			String category=boards.getCategory();
@@ -183,12 +183,30 @@ public class Services
 					  stmt=conn.createStatement();
 					  ResultSet rs;
 					  String sql="insert into boards values ('"+boardname+"','"+description+"','"+category+"')";
-					  int boardId;
-	              rs=stmt.execute(sql, boardId);
+					  ;
+	              stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
+	              rs=stmt.getGeneratedKeys();
+	              
 	            if(rs.next())
 	            {
-	            	
+	            	System.out.println("inside resultset.next");
+	            	int boardId=rs.getInt(1);
 	            	ResultSet r=stmt.executeQuery("insert into userboards values('"+boardId+"','"+userId+"')");
+	            	if(r.next())
+	            	{
+	            		System.out.println("inserted sucessfully");
+	            		message="Board Created";
+	            	}
+	            	else
+	            	{
+	            		message="error";
+	            		System.out.println("could not update userboard table");
+	            	}
+	            }
+	            else
+	            {
+	            	message="error";
+	            	System.out.println("could not insert most value");
 	            }
 	            
 				}
@@ -200,27 +218,32 @@ public class Services
 			  }
 			  d.closeConnection();
 	
-			return "Board Created";
+			return message;
 		}
 		
 		
+	
 		
-		
-		
-		
-		
-		
-		public ArrayList<Boards> showTacks(String userid,String boardName)
+		public ArrayList<Tacks> showTacks(String userid,String boardName)
 		{
 			
 			Database d=new Database();
 			conn=d.connectToDatabase();
-			ArrayList<Tacks> listOfBoards=new ArrayList<Tacks>();
+			ArrayList<Tacks> listOfAllTask=new ArrayList<Tacks>();
 			  if (conn != null) 
 			  {
 				  try {
 					  
 	              PreparedStatement prepstmt=conn.prepareStatement("select tl.idtacks,b.name,b.description from boardsFollowed bf,board b where bf.idboard=b.idboard and bf.iduser=?");
+	             
+	              
+	               
+	              
+	              
+	            /*  select idtacks from TackBoard where idboard IN 
+	              (select idboard from userboard where iduser LIKE userid AND idboard IN 
+	            		  (select idboard from board where name LIKE boardName) );*/
+	              
 	              prepstmt.setString(1,userId);
 	              ResultSet rs = prepstmt.executeQuery();
 	              System.out.println("Query"+prepstmt);
